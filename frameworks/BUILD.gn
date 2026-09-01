@@ -17,12 +17,21 @@ import("//foundation/multimedia/media_utils_lite/config.gni")
 shared_library("audio_capturer_lite") {
   sources = [ "audio_capturer.cpp" ]
 
+  # Pin this component to C++11. The lite toolchain default comes from a config
+  # (-std=c++14 / -std=c++17); flags set here are emitted after the config ones,
+  # and GCC keeps the last -std=, so this wins. gnu++11 is used rather than the
+  # strict c++11 so that GNU extensions already relied on by this code and by
+  # the OpenHarmony headers it includes keep working.
+  cflags_cc = [ "-std=gnu++11" ]
+
   if (enable_media_passthrough_mode == true) {
     sources += [ "passthrough/audio_capturer_client.cpp" ]
     include_dirs = [
       "//foundation/multimedia/audio_lite/frameworks/passthrough",
       "//foundation/multimedia/audio_lite/services/impl",
       "//foundation/systemabilitymgr/samgr_lite/interfaces/kits/samgr",
+      "//foundation/multimedia/audio_lite/services/impl/audio_source/include/local",
+      "//foundation/multimedia/audio_lite/services/impl/audio_source/include/virtual"
     ]
     deps = [
       "//foundation/multimedia/audio_lite/services:audio_capturer_impl",
@@ -53,6 +62,12 @@ shared_library("audio_capturer_lite") {
     "//foundation/multimedia/media_utils_lite:media_common",
     "//third_party/bounds_checking_function:libsec_shared",
   ]
+  if (defined(media_interface_upgrade)) {
+    public_deps += [
+      "//third_party/alsa-lib:asound_shared",
+      "//third_party/alsa-utils:alsa_utils_lite"
+    ]
+  }
 }
 
 config("audio_capturer_public_config") {

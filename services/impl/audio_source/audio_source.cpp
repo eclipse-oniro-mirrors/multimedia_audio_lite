@@ -19,14 +19,6 @@
 
 namespace OHOS {
 namespace Audio {
-#define AUDIO_RETURN_VAL_IF_NULL(condition)                                            \
-    do {                                                                               \
-        if ((condition) == nullptr) {                                                  \
-            MEDIA_ERR_LOG("" #condition " is NULL");    \
-            return ERR_ILLEGAL_STATE;                                                  \
-        }                                                                              \
-    } while (0)
-
 using namespace OHOS::Media;
 static AudioManager *g_audioManager = nullptr;
 
@@ -110,7 +102,10 @@ uint64_t AudioSource::GetFrameCount()
     if ((ret = InitCheck()) != SUCCESS) {
         return ret;
     }
-    AUDIO_RETURN_VAL_IF_NULL(audioCapture_);
+    if (audioCapture_ == nullptr) {
+        MEDIA_ERR_LOG("audioCapture_ is NULL");
+        return ERR_ILLEGAL_STATE;
+    }
     uint64_t frameCount = 0;
     ret = audioCapture_->attr.GetFrameCount(reinterpret_cast<AudioHandle>(audioCapture_), &frameCount);
     if (ret != SUCCESS) {
@@ -126,7 +121,10 @@ int32_t AudioSource::EnumDeviceBySourceType(AudioSourceType inputSource, std::ve
         MEDIA_ERR_LOG("AudioSource only support AUDIO_MIC");
         return ERR_INVALID_PARAM;
     }
-    AUDIO_RETURN_VAL_IF_NULL(audioAdapter_);
+    if (audioAdapter_ == nullptr) {
+        MEDIA_ERR_LOG("audioAdapter_ is NULL");
+        return ERR_ILLEGAL_STATE;
+    }
 
     struct AudioPortCapability capability;
     audioAdapter_->GetPortCapability(audioAdapter_, &capturePort_, &capability);
@@ -183,7 +181,10 @@ static bool ConvertCodecFormatToAudioFormat(AudioCodecFormat codecFormat, AudioF
 
 int32_t AudioSource::Initialize(const AudioSourceConfig &config)
 {
-    AUDIO_RETURN_VAL_IF_NULL(audioAdapter_);
+    if (audioAdapter_ == nullptr) {
+        MEDIA_ERR_LOG("audioAdapter_ is NULL");
+        return ERR_ILLEGAL_STATE;
+    }
     MEDIA_INFO_LOG("deviceId:0x%x config.sampleRate:%d", config.deviceId, config.sampleRate);
     struct AudioDeviceDescriptor desc;
     desc.pins = PIN_IN_MIC;
@@ -222,7 +223,10 @@ int32_t AudioSource::SetInputDevice(uint32_t deviceId)
 
 int32_t AudioSource::GetCurrentDeviceId(uint32_t &deviceId)
 {
-    AUDIO_RETURN_VAL_IF_NULL(audioCapture_);
+    if (audioCapture_ == nullptr) {
+        MEDIA_ERR_LOG("audioCapture_ is NULL");
+        return ERR_ILLEGAL_STATE;
+    }
     int32_t ret = audioCapture_->attr.GetCurrentChannelId(reinterpret_cast<AudioHandle>(audioCapture_), &deviceId);
     if (ret != SUCCESS) {
         MEDIA_ERR_LOG("GetCurrentChannelId failed:0x%x", ret);
@@ -239,7 +243,10 @@ int32_t AudioSource::Start()
         return ret;
     }
 
-    AUDIO_RETURN_VAL_IF_NULL(audioCapture_);
+    if (audioCapture_ == nullptr) {
+        MEDIA_ERR_LOG("audioCapture_ is NULL");
+        return ERR_ILLEGAL_STATE;
+    }
     ret = audioCapture_->control.Start(reinterpret_cast<AudioHandle>(audioCapture_));
     if (ret != SUCCESS) {
         MEDIA_ERR_LOG("audioCapture_ Start failed:0x%x", ret);
@@ -255,7 +262,10 @@ int32_t AudioSource::ReadFrame(AudioFrame &frame, bool isBlockingRead)
         MEDIA_ERR_LOG("AudioSource not Start");
         return ERR_ILLEGAL_STATE;
     }
-    AUDIO_RETURN_VAL_IF_NULL(audioCapture_);
+    if (audioCapture_ == nullptr) {
+        MEDIA_ERR_LOG("audioCapture_ is NULL");
+        return ERR_ILLEGAL_STATE;
+    }
     uint64_t readlen = ERR_INVALID_READ;
     int32_t ret = audioCapture_->CaptureFrame(audioCapture_, frame.buffer, frame.bufferLen, &readlen);
     if (ret != SUCCESS) {
@@ -278,7 +288,10 @@ int32_t AudioSource::Stop()
         return ERR_ILLEGAL_STATE;
     }
 
-    AUDIO_RETURN_VAL_IF_NULL(audioCapture_);
+    if (audioCapture_ == nullptr) {
+        MEDIA_ERR_LOG("audioCapture_ is NULL");
+        return ERR_ILLEGAL_STATE;
+    }
     int32_t ret = audioCapture_->control.Stop(reinterpret_cast<AudioHandle>(audioCapture_));
     if (ret != SUCCESS) {
         MEDIA_ERR_LOG("Stop failed:0x%x", ret);
