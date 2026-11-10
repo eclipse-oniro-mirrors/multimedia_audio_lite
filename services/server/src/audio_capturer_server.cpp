@@ -91,22 +91,24 @@ void AudioCapturerServer::DropServer(pid_t pid, IpcIo *reply)
     WriteInt32(reply, MEDIA_OK);
 }
 
-SurfaceBuffer *AudioCapturerServer::GetCacheBuffer(void)
+SurfaceBuffer *AudioCapturerServer::GetCacheBuffer(Surface *surface)
 {
-    if (surface_ == nullptr) {
+    if (surface == nullptr) {
         MEDIA_ERR_LOG("No available serverStore in surface.");
         return nullptr;
     }
 
     if (bufCache_ == nullptr) {
-        bufCache_ = surface_->RequestBuffer();
+        bufCache_ = surface->RequestBuffer();
     }
     return bufCache_;
 }
 
-void AudioCapturerServer::CancelBuffer(SurfaceBuffer *buffer)
+void AudioCapturerServer::CancelBuffer(Surface *surface, SurfaceBuffer *buffer)
 {
-    surface_->CancelBuffer(buffer);
+    if (surface != nullptr) {
+        surface->CancelBuffer(buffer);
+    }
     FreeCacheBuffer();
 }
 
@@ -267,23 +269,28 @@ bool AudioCapturerServer::ReadAudioBuffer(AudioCapturerServer *serverStore, \
 void *AudioCapturerServer::ReadAudioDataProcess(void *serverStr)
 {
     AudioCapturerServer *serverStore = (AudioCapturerServer *)serverStr;
-    if (serverStore == nullptr || serverStore->surface_ == nullptr) {
+    if (serverStore == nullptr || serverStore->GetSurface() == nullptr) {
         MEDIA_ERR_LOG("No available serverStore in surface.");
         return nullptr;
     }
 
     MEDIA_INFO_LOG("thread work");
     while (!serverStore->threadExit_) {
+        Surface *surface = serverStore->GetSurface();
+        if (surface == nullptr) {
+            usleep(WAIT_SURFACE_BUFFER_US);
+            continue;
+        }
         /* request surface buffer */
-        SurfaceBuffer *surfaceBuf = serverStore->GetCacheBuffer();
+        SurfaceBuffer *surfaceBuf = serverStore->GetCacheBuffer(surface);
         if (surfaceBuf == nullptr) {
             usleep(WAIT_SURFACE_BUFFER_US);
             continue;
         }
-        uint32_t size = serverStore->surface_->GetSize();
+        uint32_t size = surface->GetSize();
         void *buf = surfaceBuf->GetVirAddr();
         if (buf == nullptr) {
-            serverStore->CancelBuffer(surfaceBuf);
+            serverStore->CancelBuffer(surface, surfaceBuf);
             continue;
         }
         bool ret = serverStore->ReadAudioBuffer(serverStore, surfaceBuf, buf, size);
@@ -292,9 +299,9 @@ void *AudioCapturerServer::ReadAudioDataProcess(void *serverStr)
         }
 
         // flush buffer
-        if (serverStore->surface_->FlushBuffer(surfaceBuf) != 0) {
+        if (surface->FlushBuffer(surfaceBuf) != 0) {
             MEDIA_ERR_LOG("Flush surface buffer failed.");
-            serverStore->CancelBuffer(surfaceBuf);
+            serverStore->CancelBuffer(surface, surfaceBuf);
             ret = MEDIA_ERR;
             continue;
         }
@@ -304,12 +311,19 @@ void *AudioCapturerServer::ReadAudioDataProcess(void *serverStr)
     return nullptr;
 }
 
+Surface *AudioCapturerServer::GetSurface()
+{
+    std::lock_guard<std::mutex> lck(lock_);
+    return surface_;
+}
+
 int32_t AudioCapturerServer::SetSurfaceProcess(Surface *surface)
 {
     if (surface == nullptr) {
         MEDIA_INFO_LOG("Surface is null");
         return -1;
     }
+    std::lock_guard<std::mutex> lck(lock_);
     surface_ = surface;
 
     return 0;
