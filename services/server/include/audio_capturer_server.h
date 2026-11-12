@@ -83,6 +83,7 @@ public:
 private:
     void GetMinFrameCount(IpcIo *req, IpcIo *reply);
     int32_t SetSurfaceProcess(Surface *surface);
+    Surface *GetSurface();
     void SetInfo(AudioCapturerImpl *capturer, IpcIo *req, IpcIo *reply);
     void GetInfo(AudioCapturerImpl *capturer, IpcIo *reply);
     void Start(AudioCapturerImpl *capturer, IpcIo *reply);
@@ -91,8 +92,8 @@ private:
     void GetFrameCount(AudioCapturerImpl *capturer, IpcIo *reply);
     void GetStatus(AudioCapturerImpl *capturer, IpcIo *reply);
     void SetSurface(IpcIo *req, IpcIo *reply);
-    SurfaceBuffer *GetCacheBuffer(void);
-    void CancelBuffer(SurfaceBuffer *buffer);
+    SurfaceBuffer *GetCacheBuffer(Surface *surface);
+    void CancelBuffer(Surface *surface, SurfaceBuffer *buffer);
     void FreeCacheBuffer(void);
     void SetAudioCapturerServerCallback(AudioCapturerImpl *capturer, IpcIo *req);
     bool DeserializeCaptureInfo(const char *str, AudioCapturerInfo &info);
