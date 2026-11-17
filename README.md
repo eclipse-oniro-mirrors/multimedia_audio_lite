@@ -27,8 +27,6 @@ This repository provides the audio capability. The following aspects are covered
 
 - Build configuration: the capture server changes from a static to a shared library, audio sources are selected by the upgrade switch, dependencies are resolved per board, and distributed audio HDI include paths are added.
 
-- Open-source compliance configuration: `OAT.xml` adds the HiSilicon copyright declaration.
-
 **Figure  1**  Position of this repository \(in the dotted blue box\) in the multimedia subsystem<a name="fig584652218594"></a>  
 ![](figures/audio_lite_en.png "audio_lite_en")
 
