@@ -9,9 +9,25 @@
 
 ## Introduction<a name="section11660541593"></a>
 
-This repository provides the audio capability.
+This repository provides the audio capability. The following aspects are covered on top of this capability:
 
-This repository is adapted for the HiSpark AiFly (Hi3403V100) development board. It adds audio device management, a device-change callback mechanism, local/distributed dual audio sources, and ALSA dependency integration. It also enhances the capturer-info model, capture server and client, the encoding and read path, build configuration, and open-source compliance configuration, improving device adaptability and event notification for audio capture.
+· Audio device management: `interfaces/kits/audio_device_manager.h` and `services/audiomanager` provide the `AudioDeviceManager` singleton, supporting query of connected devices and device state maintenance, with the device list protected by a mutex.
+
+· Device-change callback mechanism: a device-change callback interface lets clients receive device-change and read-failure events pushed from the server via `SetDeviceChangeCallback`, while the server maintains the client callback object lifetime.
+
+· Local/distributed dual audio sources: `AudioSource` is abstracted into an interface, with a local capture implementation based on the HDF Audio HDI and a remote one based on the distributed audio HDI; the source is selected by device type.
+
+· ALSA dependency integration: `alsa-lib` and `alsa-utils` are introduced under `media_interface_upgrade` to support the ALSA capture path.
+
+· Capturer-info model: `AudioCapturerInfo` gains device ID and device type fields and `SetCapturerInfo` takes a const reference, allowing the capture device to be specified explicitly.
+
+· Capture server and client: the server provides device-info management and event dispatch; the client manages the IPC identity with a smart pointer and adds a stub context plus callback mutex to avoid dangling callbacks and lifetime issues.
+
+· Encoding and read path: adapted to local/distributed source selection, notifies clients through callbacks in some read-failure scenarios, and improves start/stop state validation and logging.
+
+· Build configuration: the capture server changes from a static to a shared library, audio sources are selected by the upgrade switch, dependencies are resolved per board, and distributed audio HDI include paths are added.
+
+· Open-source compliance configuration: `OAT.xml` adds the HiSilicon copyright declaration.
 
 **Figure  1**  Position of this repository \(in the dotted blue box\) in the multimedia subsystem<a name="fig584652218594"></a>  
 ![](figures/audio_lite_en.png "audio_lite_en")
